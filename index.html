@@ -22,8 +22,21 @@
   <div style="margin-top: 10px;">
     <button onclick="saveToFirebase()">💾 과목 저장하기</button>
     <button onclick="loadFromFirebase()">🔄 과목 불러오기</button>
+
+      <h3 style="margin-top:40px;">📋 내가 수강한 특성화 교과목</h3>
+     <table id="summaryTable">
+     <thead>
+     <tr>
+      <th>번호</th>
+      <th>과목명</th>
+      <th>학점</th>
+      <th>성적</th>
+     </tr>
+     </thead>
+     <tbody></tbody>
+     </table>
+     </div>
   </div>
-</div>
   <h2>📘 특성화 교과목 확인 시스템</h2>
 
   <h3>1️⃣ 과목 입력 (최대 20과목)</h3>
@@ -52,6 +65,7 @@
 
   <button onclick="checkSubjects()">확인하기</button>
   <div class="result" id="output"></div>
+
 
   <script>
     
@@ -414,6 +428,7 @@
     subjects: data
    }).then(() => alert("✅ 서버에 저장되었습니다!"))
     .catch(err => alert("⚠️ 저장 실패: " + err.message));
+    updateSummaryTable(data);
    }
 
    function loadFromFirebase() {
@@ -446,10 +461,27 @@
         rows[i].cells[3].querySelector("select").value = item.grade;
       }
     });
+    updateSummaryTable(subjects);
 
     alert("✅ 서버에서 불러오기 완료!");
   }).catch(err => alert("⚠️ 불러오기 실패: " + err.message));
-}
+ }
+ function updateSummaryTable(subjects) {
+  const tbody = document.querySelector("#summaryTable tbody");
+  tbody.innerHTML = ""; // 기존 내용 초기화
+
+  subjects.forEach((item, index) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${item.subject}</td>
+      <td>${item.credit}</td>
+      <td>${item.grade}</td>
+    `;
+    tbody.appendChild(row);
+  });
+ }
+
   </script>
 </body>
 </html>
