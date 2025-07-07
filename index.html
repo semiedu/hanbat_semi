@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <title>특성화 교과목 확인 시스템</title>
-  <style>
+   <style>
     body { font-family: sans-serif; padding: 20px; max-width: 1000px; margin: auto; }
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
@@ -14,6 +14,16 @@
   </style>
 </head>
 <body>
+  <div style="margin-top: 40px;">
+  <h3>📝 학생 정보 입력</h3>
+  <input type="text" id="studentName" placeholder="성명" style="margin-right:10px; padding: 8px;">
+  <input type="text" id="studentId" placeholder="학번" style="margin-right:10px; padding: 8px;">
+  <input type="email" id="studentEmail" placeholder="이메일 주소" style="padding: 8px;">
+  <div style="margin-top: 10px;">
+    <button onclick="saveToFirebase()">💾 과목 저장하기</button>
+    <button onclick="loadFromFirebase()">🔄 과목 불러오기</button>
+  </div>
+</div>
   <h2>📘 특성화 교과목 확인 시스템</h2>
 
   <h3>1️⃣ 과목 입력 (최대 20과목)</h3>
@@ -44,6 +54,7 @@
   <div class="result" id="output"></div>
 
   <script>
+    
     const 성적옵션 = ["A+", "A0", "B+", "B0", "C+", "C0", "D+", "D0", "P", "NP", "F"];
 
    const 공정과목 = [
@@ -329,20 +340,99 @@
       });
 
       const result = `
-🧪 반도체공정소자융합 수강 과목 수: ${processCount}개 / 학점 합계: ${processCredit}
-📐 반도체회로설계융합 수강 과목 수: ${designCount}개 / 학점 합계: ${designCredit}
+      🧪 반도체공정소자융합 수강 과목 수: ${processCount}개 / 학점 합계: ${processCredit}
+      📐 반도체회로설계융합 수강 과목 수: ${designCount}개 / 학점 합계: ${designCredit}
 
-✅ 반도체공정소자융합 과목: ${processSubjects.join(', ')}
-✅ 반도체회로설계융합 과목: ${designSubjects.join(', ')}
+      ✅ 반도체공정소자융합 과목: ${processSubjects.join(', ')}
+      ✅ 반도체회로설계융합 과목: ${designSubjects.join(', ')}
 
-🔍 특화과목 확인 결과:
-${fusionResults}
+      🔍 특화과목 확인 결과:
+      ${fusionResults}
       `;
 
       document.getElementById("output").textContent = result;
+     }
+      document.addEventListener("DOMContentLoaded", () => {
+      fillTable();
+      });
+
+   
+   </script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+   <script>
+   
+    // Firebase 구성 정보
+    const firebaseConfig = {
+      apiKey: "AIzaSyCqAkZdsttkMqkXE3jfncLlspPjnyGq3Ok",
+      authDomain: "subjectcheck-d4c29.firebaseapp.com",
+      projectId: "subjectcheck-d4c29",
+      storageBucket: "subjectcheck-d4c29.appspot.com",
+      messagingSenderId: "793005919646",
+      appId: "1:793005919646:web:03ea30508089e76860da8f"
+    };
+
+    // Firebase 초기화
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    function saveToFirebase() {
+    const name = document.getElementById("studentName").value.trim();
+    const studentId = document.getElementById("studentId").value.trim();
+    const email = document.getElementById("studentEmail").value.trim();
+
+    if (!name || !studentId || !email) {
+    return alert("성명, 학번, 이메일을 모두 입력하세요!");
+   }
+
+    const rows = document.querySelectorAll("#subjectTable tbody tr");
+    const data = Array.from(rows).map(row => ({
+    subject: row.cells[1].querySelector("input").value.trim(),
+    credit: row.cells[2].querySelector("input").value.trim(),
+    grade: row.cells[3].querySelector("select").value
+   })).filter(item => item.subject !== "");
+
+   db.collection("students").doc(studentId).set({
+    name,
+    email,
+    subjects: data
+   }).then(() => alert("✅ 서버에 저장되었습니다!"))
+    .catch(err => alert("⚠️ 저장 실패: " + err.message));
+   }
+
+   function loadFromFirebase() {
+  const studentId = document.getElementById("studentId").value.trim();
+  const nameInput = document.getElementById("studentName").value.trim();
+  const emailInput = document.getElementById("studentEmail").value.trim();
+
+  if (!studentId || !nameInput || !emailInput) {
+    return alert("성명, 학번, 이메일을 모두 입력하세요!");
+  }
+
+  db.collection("students").doc(studentId).get().then(doc => {
+    if (!doc.exists) return alert("❌ 해당 학번의 데이터가 없습니다.");
+
+    const data = doc.data();
+
+    // 🔐 성명/이메일 검증
+    if (data.name !== nameInput || data.email !== emailInput) {
+      return alert("❌ 성명 또는 이메일이 일치하지 않습니다.");
     }
 
-    fillTable();
+    const subjects = data.subjects || [];
+
+    // 과목 복원
+    const rows = document.querySelectorAll("#subjectTable tbody tr");
+    subjects.forEach((item, i) => {
+      if (rows[i]) {
+        rows[i].cells[1].querySelector("input").value = item.subject;
+        rows[i].cells[2].querySelector("input").value = item.credit;
+        rows[i].cells[3].querySelector("select").value = item.grade;
+      }
+    });
+
+    alert("✅ 서버에서 불러오기 완료!");
+  }).catch(err => alert("⚠️ 불러오기 실패: " + err.message));
+}
   </script>
 </body>
 </html>
