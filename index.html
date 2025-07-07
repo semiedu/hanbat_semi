@@ -39,7 +39,7 @@
     <tbody></tbody>
   </table>
 
-  <h3 style="margin-top:40px">2️⃣ 반도체특화융합전공 과목 확인용 입력</h3>
+  <h3 style="margin-top:40px">2️⃣ 반도체특화융합전공 과목 확인용 입력 <br> &nbsp; &nbsp; &nbsp;(한밭대 계절학기-메모리반도체, 첨단반도체패키지개론 / 아주대 계절학기-나노및마이크로소자공정, 반도체실험)</h3>
   <table>
     <thead>
       <tr><th>과목명</th></tr>
@@ -308,50 +308,67 @@
     }
 
     function checkSubjects() {
-      const rows = document.querySelectorAll("#subjectTable tbody tr");
-      let processCount = 0, designCount = 0;
-      let processCredit = 0, designCredit = 0;
-      let processSubjects = [], designSubjects = [];
+    const rows = document.querySelectorAll("#subjectTable tbody tr");
+    let processCount = 0, designCount = 0;
+    let processCredit = 0, designCredit = 0;
+    let processSubjects = [], designSubjects = [], unknownSubjects = [];
 
-      rows.forEach(row => {
-        const subject = row.cells[1].querySelector("input").value.trim();
-        const credit = parseFloat(row.cells[2].querySelector("input").value) || 0;
+    rows.forEach(row => {
+    const subject = row.cells[1].querySelector("input").value.trim();
+    const credit = parseFloat(row.cells[2].querySelector("input").value) || 0;
 
-        if (공정과목.includes(subject)) {
-          processCount++; processCredit += credit;
-          processSubjects.push(subject);
-        }
-        if (설계과목.includes(subject)) {
-          designCount++; designCredit += credit;
-          designSubjects.push(subject);
-        }
-      });
+    if (!subject) return; // 빈칸 무시
 
-      const fusionInputs = document.querySelectorAll(".fusionInput");
-      let fusionResults = "";
-      fusionInputs.forEach(input => {
-        const val = input.value.trim();
-        if (val === "") return;
-        if (특화공정.includes(val) || 특화설계.includes(val)) {
-          fusionResults += `✅ ${val} 은(는) 반도체특화융합전공 과목입니다.\n`;
-        } else {
-          fusionResults += `❌ ${val} 은(는) 반도체특화융합전공 과목이 아닙니다.\n`;
-        }
-      });
+    let matched = false;
 
-      const result = `
-      🧪 반도체공정소자융합 수강 과목 수: ${processCount}개 / 학점 합계: ${processCredit}
-      📐 반도체회로설계융합 수강 과목 수: ${designCount}개 / 학점 합계: ${designCredit}
+    if (공정과목.includes(subject)) {
+      processCount++; processCredit += credit;
+      processSubjects.push(subject);
+      matched = true;
+    }
 
-      ✅ 반도체공정소자융합 과목: ${processSubjects.join(', ')}
-      ✅ 반도체회로설계융합 과목: ${designSubjects.join(', ')}
+    if (설계과목.includes(subject)) {
+      designCount++; designCredit += credit;
+      designSubjects.push(subject);
+      matched = true;
+    }
 
-      🔍 특화과목 확인 결과:
-      ${fusionResults}
-      `;
-
-      document.getElementById("output").textContent = result;
+    if (!matched) {
+      unknownSubjects.push(subject);
      }
+   });
+
+   // 특화 확인용 입력
+   const fusionInputs = document.querySelectorAll(".fusionInput");
+   let fusionResults = "";
+   fusionInputs.forEach(input => {
+    const val = input.value.trim();
+    if (val === "") return;
+    if (특화공정.includes(val) || 특화설계.includes(val)) {
+      fusionResults += `✅ ${val} 은(는) 반도체특화융합전공 과목입니다.\n`;
+     } else {
+      fusionResults += `❌ ${val} 은(는) 반도체특화융합전공 과목이 아닙니다.\n`;
+    }
+   });
+
+   // 결과 메시지 구성
+   const result = `
+  🧪 반도체공정소자융합 수강 과목 수: ${processCount}개 / 학점 합계: ${processCredit}
+  📐 반도체회로설계융합 수강 과목 수: ${designCount}개 / 학점 합계: ${designCredit}
+
+  ✅ 반도체공정소자융합 과목: ${processSubjects.join(', ') || "없음"}
+  ✅ 반도체회로설계융합 과목: ${designSubjects.join(', ') || "없음"}
+
+  ⚠️ 해당되지 않는 과목: ${unknownSubjects.join(', ') || "없음"}
+  
+ 
+  🔍 특화과목 확인 결과:
+  ${fusionResults}
+ `;
+ 
+
+  document.getElementById("output").textContent = result;
+}
       document.addEventListener("DOMContentLoaded", () => {
       fillTable();
       });
