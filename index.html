@@ -25,28 +25,14 @@
     <button onclick="loadFromFirebase()">🔄 과목 불러오기</button>
   </div>
 
-      <h3 style="margin-top:40px;">📋 내가 수강한 특성화 교과목</h3>
-     <table id="summaryTable">
-     <thead>
-     <tr>
-      <th>번호</th>
-      <th>과목명</th>
-      <th>학점</th>
-      <th>성적</th>
-     </tr>
-     </thead>
-     <tbody></tbody>
-     </table>
-     
-
-  <h2>📘 특성화 교과목 확인 시스템</h2>
-
-  <h3>1️⃣ 과목 입력 (최대 20과목)</h3>
-  <table id="subjectTable">
+  <h3 style="margin-top:40px;">📋 내가 수강한 특성화 교과목</h3>
+  <table id="summaryTable">
     <thead>
       <tr>
         <th>번호</th>
+        <th>학과</th>
         <th>과목명</th>
+        <th>이수학기</th>
         <th>학점</th>
         <th>성적</th>
       </tr>
@@ -54,8 +40,25 @@
     <tbody></tbody>
   </table>
 
-  <h3 style="margin-top:40px">2️⃣ 반도체특화융합전공 과목 확인용 입력 <br> &nbsp; &nbsp; &nbsp;(한밭대 계절학기-메모리반도체, 첨단반도체패키지개론 / 아주대 계절학기-나노및마이크로소자공정, 반도체실험)</h3>
-  <table>
+  <h2>📘 특성화 교과목 확인 시스템</h2>
+
+   <h3>1️⃣ 과목 입력 (최대 20과목)</h3>
+   <table id="subjectTable">
+    <thead>
+      <tr>
+        <th>번호</th>
+        <th>학과</th>
+        <th>과목명</th>
+        <th>이수학기<br><small>(ex. 2025-1, 2, s, w)</small></th>
+        <th>학점</th>
+        <th>성적</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+   <h3 style="margin-top:40px">2️⃣ 반도체특화융합전공 과목 확인용 입력 <br> &nbsp; &nbsp; &nbsp;(한밭대 계절학기-메모리반도체, 첨단반도체패키지개론 / 아주대 계절학기-나노및마이크로소자공정, 반도체실험)</h3>
+   <table>
     <thead>
       <tr><th>과목명</th></tr>
     </thead>
@@ -68,12 +71,27 @@
   <button onclick="checkSubjects()">확인하기</button>
   <div class="result" id="output"></div>
 
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
-  <script>
-    
+<script>
     const 성적옵션 = ["A+", "A0", "B+", "B0", "C+", "C0", "D+", "D0", "P", "NP", "F"];
+    const 학과목록 = {
+      "반도체공정소자융합전공": ["미래반도체입문", "반도체공학개론", "반도체물리", "논리회로", "전자기학", "물리화학", "회로이론", "전자회로", "센서공학", "디스플레이공학", "첨단반도체패키지개론", "반도체소자실험", "마이크로프로세서", "반도체재료", "OLED이론및실습", "반도체패키지공정실습및분석", "반도체소자공학", "반도체공정이론및실습", "니노마이크로공정및실습", "캡스톤디자인1", "반도체단위공정론", "나노반도체재료공학", "박막및나노표면공학", "기기분석및실험", "메모리반도체", "반도체소재설계", "캡스톤디자인2", "캡스톤디자인3", "반도체융합특강"],
+      "반도체회로설계융합전공": ["미래반도체입문", "반도체공학개론", "반도체물리", "디지털회로설계", "논리회로", "전자기학", "회로이론", "컴퓨터구조", "반도체공학", "디지털시스템설계", "전자회로1", "전력전자공학", "임베디드시스템설계", "전자회로2", "마이크로프로세서", "디지털집적회로", "FPGA설계", "초고주파공학", "전력변환응용", "전력전자및응용실험", "디지털집적회로설계", "센서인터페이스설계", "시스템반도체설계", "아날로그집적회로", "RFIC설계", "캡스톤디자인1", "ASIC설계", "보안용칩설계", "지능형반도체", "메모리반도체", "전력반도체설계", "캡스톤디자인2", "캡스톤디자인3", "반도체융합특강"],
+      "반도체시스템공학과": ["반도체공학개론", "반도체물리", "논리회로", "전자기학", "회로이론1", "전자회로1", "마이크로프로세서", "반도체물성", "반도체소자", "캡스톤디자인1", "반도체공정", "캡스톤디자인2", "컴퓨터구조", "디지털시스템설계", "전자회로2", "디지털집적회로", "FPGA설계", "초고주파공학", "시스템반도체설계", "아날로그집적회로", "RFIC설계", "ASIC설계", "보안용칩설계", "지능형반도체", "메모리반도체", "전력반도체설계"],
+      "전자공학과": ["디지털논리회로", "전자기학1", "회로이론1", "전자회로1", "센서공학개론", "정보디스플레이공학", "마이크로프로세서", "반도체공학", "반도체소자", "캡스톤디자인1", "캡스톤디자인2", "전자회로2", "전력전자응용", "아날로그및혼성시스템설계", "VLSI설계"],
+      "모바일융합공학과": ["디지털공학", "전자기장시뮬레이션", "회로이론및시뮬레이션1", "전자회로및시뮬레이션1", "캡스톤디자인1", "캡스톤디자인2", "Verilog프로그래밍", "전자회로및시뮬레이션2", "무선응용공학"],
+      "정보통신공학과": ["전자물성공학", "논리회로", "전자기학", "회로이론", "전자회로1", "반도체센서공학", "사물인터넷", "반도체소자공학", "캡스톤디자인1", "캡스톤디자인2", "컴퓨터구조", "디지털시스템", "전자회로2", "FPGA설계", "마이크로파공학", "시스템반도체설계", "아날로그회로설계"],
+      "전기공학과": ["반도체물성공학", "논리회로설계", "전기자기학1", "회로이론1", "전자회로", "센서공학", "마이크로프로세서", "반도체공학", "디지털시스템", "전력전자공학", "전력변환응용", "전력전자및응용실험", "캡스톤디자인1", "캡스톤디자인2"],
+      "신소재공학과": ["재료전자물성론", "물리화학", "디스플레이공학", "반도체소자실험", "반도체재료", "반도체소자공학", "캡스톤디자인1", "반도체단위공정론", "나노반도체재료공학", "박막및나노표면공학", "반도체소재설계", "캡스톤디자인2"],
+      "창의융합학과": ["디지털논리회로및실습", "전자기학", "물리화학", "기초전자이론및실험", "전자회로및실험", "IoT센서공학", "능동형디스플레이공학", "마이크로프로세서및실습", "전자디바이스재료", "OLED이론및실습", "반도체소자공학", "반도체공정이론및실습", "나노마이크로공정및실습", "캡스톤디자인1", "박막공학및실습", "기기분석및실험", "캡스톤디자인2"],
+      "아주대": ["미래반도체입문", "반도체물리", "전자기학", "센서공학", "반도체실험", "임베디드시스템", "반도체공학", "반도체공학2", "반도체공정장비실습", "나노및마이크로소자공정", "반도체연구", "반도체공정기술", "메모리설계", "반도체심화연구", "반도체심화연구2", "전자회로1", "전력전자공학", "전자회로2", "디지털집적회로", "VLSI시스템설계", "센서인터페이스설계", "시스템반도체설계", "아날로그집적회로", "RF회로", "지능형반도체설계"],
+      "DSC공유대학 첨단센서 융합디바이스 전공": ["첨단센서융합 캡스톤디자인1", "첨단센서융합 캡스톤디자인2"],
+      "반도체공정분석다중전공": ["반도체물리", "반도체분석실험1", "전자재료공정", "집적회로공정론", "캡스톤디자인", "반도체장비의이해", "박막및나노표면공학", "신소재분석", "반도체소재설계"]
+    };
 
-   const 공정과목 = [
+    const 공정과목 = [
   "IoT센서공학",
   "OLED이론및실습",
   "기기분석및실험",
@@ -148,7 +166,9 @@
   "캡스톤디자인3",
   "회로이론",
   "회로이론1",
-  "회로이론및시뮬레이션1"
+  "회로이론및시뮬레이션1",
+  "첨단센서융합 캡스톤디자인1",
+  "첨단센서융합 캡스톤디자인2"
 ];
 
     const 특화공정 = [
@@ -258,7 +278,9 @@
   "컴퓨터구조",
   "회로이론",
   "회로이론1",
-  "회로이론및시뮬레이션1"
+  "회로이론및시뮬레이션1",
+  "첨단센서융합 캡스톤디자인1",
+  "첨단센서융합 캡스톤디자인2"
 ];
     const 특화설계 = [
   "ASIC설계",
@@ -297,106 +319,7 @@
   "회로이론"
 ];
 
-    function createRow(index) {
-      const row = document.createElement("tr");
-      const 성적셀 = document.createElement("select");
-      성적옵션.forEach(g => {
-        const opt = document.createElement("option");
-        opt.value = g;
-        opt.textContent = g;
-        성적셀.appendChild(opt);
-      });
-      row.innerHTML = `
-        <td>${index}</td>
-        <td><input type="text" placeholder="과목명"></td>
-        <td><input type="number" min="0" step="0.5" placeholder="학점"></td>
-        <td></td>
-      `;
-      row.querySelector("td:nth-child(4)").appendChild(성적셀);
-      return row;
-    }
-
-    function fillTable() {
-      const tbody = document.querySelector("#subjectTable tbody");
-      for (let i = 1; i <= 20; i++) {
-        tbody.appendChild(createRow(i));
-      }
-    }
-
-    function checkSubjects() {
-    const rows = document.querySelectorAll("#subjectTable tbody tr");
-    let processCount = 0, designCount = 0;
-    let processCredit = 0, designCredit = 0;
-    let processSubjects = [], designSubjects = [], unknownSubjects = [];
-
-    rows.forEach(row => {
-    const subject = row.cells[1].querySelector("input").value.trim();
-    const credit = parseFloat(row.cells[2].querySelector("input").value) || 0;
-
-    if (!subject) return; // 빈칸 무시
-
-    let matched = false;
-
-    if (공정과목.includes(subject)) {
-      processCount++; processCredit += credit;
-      processSubjects.push(subject);
-      matched = true;
-    }
-
-    if (설계과목.includes(subject)) {
-      designCount++; designCredit += credit;
-      designSubjects.push(subject);
-      matched = true;
-    }
-
-    if (!matched) {
-      unknownSubjects.push(subject);
-     }
-   });
-
-   // 특화 확인용 입력
-   const fusionInputs = document.querySelectorAll(".fusionInput");
-   let fusionResults = "";
-   fusionInputs.forEach(input => {
-    const val = input.value.trim();
-    if (val === "") return;
-    if (특화공정.includes(val) || 특화설계.includes(val)) {
-      fusionResults += `✅ ${val} 은(는) 반도체특화융합전공 과목입니다.\n`;
-     } else {
-      fusionResults += `❌ ${val} 은(는) 반도체특화융합전공 과목이 아닙니다.\n`;
-    }
-   });
-
-   // 결과 메시지 구성
-   const result = `
-  🧪 반도체공정소자융합 수강 과목 수: ${processCount}개 / 학점 합계: ${processCredit}
-  📐 반도체회로설계융합 수강 과목 수: ${designCount}개 / 학점 합계: ${designCredit}
-
-  ✅ 반도체공정소자융합 과목: ${processSubjects.join(', ') || "없음"}
-  ✅ 반도체회로설계융합 과목: ${designSubjects.join(', ') || "없음"}
-
-  ⚠️ 해당되지 않는 과목: ${unknownSubjects.join(', ') || "없음"}
-  
- 
-  🔍 특화과목 확인 결과:
-  ${fusionResults}
- `;
- 
-
-  document.getElementById("output").textContent = result;
-}
-      document.addEventListener("DOMContentLoaded", () => {
-      fillTable();
-      });
-
-   
-   </script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-   <script>
-   
-    // Firebase 구성 정보
-    const firebaseConfig = {
+   const firebaseConfig = {
       apiKey: "AIzaSyCqAkZdsttkMqkXE3jfncLlspPjnyGq3Ok",
       authDomain: "subjectcheck-d4c29.firebaseapp.com",
       projectId: "subjectcheck-d4c29",
@@ -405,35 +328,152 @@
       appId: "1:793005919646:web:03ea30508089e76860da8f"
     };
 
-    // Firebase 초기화
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    function saveToFirebase() {
-    const name = document.getElementById("studentName").value.trim();
-    const studentId = document.getElementById("studentId").value.trim();
-    const email = document.getElementById("studentEmail").value.trim();
 
-    if (!name || !studentId || !email) {
-    return alert("성명, 학번, 이메일을 모두 입력하세요!");
-   }
 
-    const rows = document.querySelectorAll("#subjectTable tbody tr");
-    const data = Array.from(rows).map(row => ({
-    subject: row.cells[1].querySelector("input").value.trim(),
-    credit: row.cells[2].querySelector("input").value.trim(),
-    grade: row.cells[3].querySelector("select").value
-   })).filter(item => item.subject !== "");
+  function createRow(index) {
+      const row = document.createElement("tr");
 
-   db.collection("students").doc(studentId).set({
-    name,
-    email,
-    subjects: data
-   }).then(() => alert("✅ 서버에 저장되었습니다!"))
-    .catch(err => alert("⚠️ 저장 실패: " + err.message));
-    updateSummaryTable(data);
-   }
+      const 학과셀 = document.createElement("select");
+      학과셀.innerHTML = `<option value="">학과 선택</option>` +
+        Object.keys(학과목록).map(major => `<option value="${major}">${major}</option>`).join('');
 
-   function loadFromFirebase() {
+      const 과목셀 = document.createElement("select");
+      과목셀.innerHTML = `<option value="">과목 선택</option>`;
+
+      학과셀.addEventListener("change", () => {
+        const selected = 학과셀.value;
+        const subjects = 학과목록[selected] || [];
+        과목셀.innerHTML = `<option value="">과목 선택</option>` +
+          subjects.map(sub => `<option value="${sub}">${sub}</option>`).join('');
+      });
+
+      const 학기셀 = document.createElement("input");
+      학기셀.placeholder = "ex. 2025-1, 2, s, w";
+
+      const 학점셀 = document.createElement("input");
+      학점셀.type = "number";
+      학점셀.step = "0.5";
+      학점셀.min = "0";
+
+      const 성적셀 = document.createElement("select");
+      성적셀.innerHTML = 성적옵션.map(s => `<option value="${s}">${s}</option>`).join('');
+
+      row.innerHTML = `<td>${index}</td>`;
+      [학과셀, 과목셀, 학기셀, 학점셀, 성적셀].forEach(el => {
+        const td = document.createElement("td");
+        td.appendChild(el);
+        row.appendChild(td);
+      });
+
+      return row;
+    }
+     function fillTable() {
+      const tbody = document.querySelector("#subjectTable tbody");
+      for (let i = 1; i <= 20; i++) {
+        tbody.appendChild(createRow(i));
+      }
+    }
+     function checkSubjects() {
+      const rows = document.querySelectorAll("#subjectTable tbody tr");
+      const summaryTbody = document.querySelector("#summaryTable tbody");
+      const resultDiv = document.getElementById("output");
+      summaryTbody.innerHTML = "";
+
+      let processCount = 0, designCount = 0;
+      let processCredit = 0, designCredit = 0;
+      let processSubjects = [], designSubjects = [], unknownSubjects = [];
+
+      rows.forEach((row, index) => {
+        const cells = row.querySelectorAll("td");
+        const 학과 = cells[1].querySelector("select").value;
+        const 과목 = cells[2].querySelector("select").value;
+        const 학기 = cells[3].querySelector("input").value;
+        const 학점 = parseFloat(cells[4].querySelector("input").value) || 0;
+        const 성적 = cells[5].querySelector("select").value;
+
+        if (학과 && 과목) {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${index + 1}</td><td>${학과}</td><td>${과목}</td><td>${학기}</td><td>${학점}</td><td>${성적}</td>`;
+          summaryTbody.appendChild(tr);
+
+          let matched = false;
+          if (공정과목.includes(과목)) {
+            processCount++;
+            processCredit += 학점;
+            processSubjects.push(과목);
+            matched = true;
+          }
+          if (설계과목.includes(과목)) {
+            designCount++;
+            designCredit += 학점;
+            designSubjects.push(과목);
+            matched = true;
+          }
+          if (!matched) unknownSubjects.push(과목);
+        }
+      });
+
+      const fusionInputs = document.querySelectorAll(".fusionInput");
+      let fusionResults = "";
+      fusionInputs.forEach(input => {
+      const val = input.value.trim();
+      if (val === "") return;
+      if (특화공정.includes(val) || 특화설계.includes(val)) {
+      fusionResults += `✅ ${val} 은(는) 반도체특화융합전공 과목입니다.\n`;
+     } else {
+      fusionResults += `❌ ${val} 은(는) 반도체특화융합전공 과목이 아닙니다.\n`;
+     }
+    });
+
+      const result = `
+🧪 반도체공정소자융합 과목 수: ${processCount}개 / 학점: ${processCredit}
+📐 반도체회로설계융합 과목 수: ${designCount}개 / 학점: ${designCredit}
+
+✅ 공정 과목 목록: ${processSubjects.join(', ') || '없음'}
+✅ 설계 과목 목록: ${designSubjects.join(', ') || '없음'}
+
+⚠️ 분류되지 않은 과목: ${unknownSubjects.join(', ') || '없음'}
+
+🔍 특화과목 확인 결과:
+${fusionResults}
+`;
+
+      resultDiv.textContent = result;
+    }
+
+
+     function saveToFirebase() {
+      const name = document.getElementById("studentName").value.trim();
+      const studentId = document.getElementById("studentId").value.trim();
+      const email = document.getElementById("studentEmail").value.trim();
+
+      if (!name || !studentId || !email) {
+        return alert("성명, 학번, 이메일을 모두 입력하세요!");
+      }
+
+      const rows = document.querySelectorAll("#subjectTable tbody tr");
+      const data = Array.from(rows).map(row => {
+        const cells = row.querySelectorAll("td");
+        return {
+          major: cells[1].querySelector("select").value,
+          subject: cells[2].querySelector("select").value,
+          semester: cells[3].querySelector("input").value,
+          credit: cells[4].querySelector("input").value,
+          grade: cells[5].querySelector("select").value
+        };
+      }).filter(item => item.subject);
+
+      db.collection("students").doc(studentId).set({
+        name,
+        email,
+        subjects: data
+      }).then(() => alert("✅ 서버에 저장되었습니다!"))
+        .catch(err => alert("⚠️ 저장 실패: " + err.message));
+    }
+
+    function loadFromFirebase() {
   const studentId = document.getElementById("studentId").value.trim();
   const nameInput = document.getElementById("studentName").value.trim();
   const emailInput = document.getElementById("studentEmail").value.trim();
@@ -446,43 +486,43 @@
     if (!doc.exists) return alert("❌ 해당 학번의 데이터가 없습니다.");
 
     const data = doc.data();
-
-    // 🔐 성명/이메일 검증
     if (data.name !== nameInput || data.email !== emailInput) {
       return alert("❌ 성명 또는 이메일이 일치하지 않습니다.");
     }
 
-    const subjects = data.subjects || [];
-
-    // 과목 복원
     const rows = document.querySelectorAll("#subjectTable tbody tr");
-    subjects.forEach((item, i) => {
-      if (rows[i]) {
-        rows[i].cells[1].querySelector("input").value = item.subject;
-        rows[i].cells[2].querySelector("input").value = item.credit;
-        rows[i].cells[3].querySelector("select").value = item.grade;
-      }
-    });
-    updateSummaryTable(subjects);
+    const tasks = [];
 
-    alert("✅ 서버에서 불러오기 완료!");
+    (data.subjects || []).forEach((item, i) => {
+      const cells = rows[i].querySelectorAll("td");
+      cells[1].querySelector("select").value = item.major;
+      const subjectSelect = cells[2].querySelector("select");
+
+      cells[1].querySelector("select").dispatchEvent(new Event('change'));
+
+      const promise = new Promise(resolve => {
+        setTimeout(() => {
+          subjectSelect.value = item.subject;
+          resolve();
+        }, 50);
+      });
+
+      tasks.push(promise);
+      cells[3].querySelector("input").value = item.semester;
+      cells[4].querySelector("input").value = item.credit;
+      cells[5].querySelector("select").value = item.grade;
+    });
+
+    Promise.all(tasks).then(() => {
+      alert("✅ 서버에서 불러오기 완료!");
+      checkSubjects(); // 여기서 정확하게 실행됨
+    });
+
   }).catch(err => alert("⚠️ 불러오기 실패: " + err.message));
  }
- function updateSummaryTable(subjects) {
-  const tbody = document.querySelector("#summaryTable tbody");
-  tbody.innerHTML = ""; // 기존 내용 초기화
 
-  subjects.forEach((item, index) => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${index + 1}</td>
-      <td>${item.subject}</td>
-      <td>${item.credit}</td>
-      <td>${item.grade}</td>
-    `;
-    tbody.appendChild(row);
-  });
- }
+
+    document.addEventListener("DOMContentLoaded", fillTable);
 
   </script>
 </body>
